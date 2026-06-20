@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     const char *pipe_to_receiver = "/tmp/counter_to_receiver";
     const char *pipe_to_initiator = "/tmp/counter_to_initiator";
 
-    int counter = -1;
+    int counter = 0;
     bool is_intiator = true;
 
     if (argc >= 2)
