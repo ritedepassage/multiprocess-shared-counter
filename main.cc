@@ -164,6 +164,9 @@ int main(int argc, char **argv)
                 break;
             }
 
+            if (counter >= 10)
+                break;
+
             // Increment and send back
             counter++;
             sleep(1);  // Simulate processing
