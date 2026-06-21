@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <chrono>
 #include <thread>
+#include <string>
 
 #include "ipc-manager.hh"
 
@@ -19,6 +20,10 @@ private:
 
     static constexpr const char *PIPE_TO_RECEIVER = "/tmp/counter_to_receiver";
     static constexpr const char *PIPE_TO_SENDER = "/tmp/counter_to_sender";
+    static constexpr int MAX_COUNTER{10};
+    static constexpr auto POLL_INTERVAL{std::chrono::milliseconds(100)};
+    static constexpr auto PROCESS_INTERVAL{std::chrono::milliseconds(500)};
+    static constexpr auto CONNECTION_TIMEOUT{std::chrono::seconds(30)};
 
 public:
     explicit blocking_pipe_manager(bool is_producer) : ipc_manager{"blocking_pipe"}, is_producer_{is_producer}
@@ -154,11 +159,24 @@ private:
 
     void setup_as_consumer()
     {
+        auto start = std::chrono::steady_clock::now();
 
         while ((access(PIPE_TO_RECEIVER, F_OK) == -1 ||
                 access(PIPE_TO_SENDER, F_OK) == -1))
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            if (signal_handler::should_exit())
+            {
+                throw std::runtime_error("Interrupted while waiting for pipes");
+            }
+
+            auto elapsed = std::chrono::steady_clock::now() - start;
+            if (elapsed > CONNECTION_TIMEOUT)
+            {
+                auto timeout_seconds = std::chrono::duration_cast<std::chrono::seconds>(CONNECTION_TIMEOUT).count();
+                 throw std::runtime_error(std::string("Timeout waiting for pipes after ") + std::to_string(timeout_seconds) + std::string(" seconds"));
+            }
+
+            std::this_thread::sleep_for(POLL_INTERVAL);
         }
 
         reader_fd_ = open(PIPE_TO_RECEIVER, O_RDONLY);
