@@ -8,7 +8,6 @@
 
 #include "blocking-pipe-manager.hh"
 
-
 int main(int argc, char **argv)
 {
     bool is_intiator = true;
@@ -27,18 +26,26 @@ int main(int argc, char **argv)
         }
     }
 
-    std::unique_ptr<ipc_manager<blocking_pipe_manager>> ipc_mgr;
-
-    if (is_intiator)
+    try
     {
-        ipc_mgr = std::make_unique<blocking_pipe_manager>(true);
-    }
-    else
-    {
-        ipc_mgr = std::make_unique<blocking_pipe_manager>(false);
-    }
+        std::unique_ptr<ipc_manager<blocking_pipe_manager>> ipc_mgr;
 
-    ipc_mgr->run();
+        if (is_intiator)
+        {
+            ipc_mgr = std::make_unique<blocking_pipe_manager>(true);
+        }
+        else
+        {
+            ipc_mgr = std::make_unique<blocking_pipe_manager>(false);
+        }
+
+        ipc_mgr->run();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Fatal error: {}" << e.what() << std::endl;
+        return -1;
+    }
 
     return 0;
 }

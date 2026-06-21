@@ -139,8 +139,17 @@ private:
         }
 
         writer_fd_ = open(PIPE_TO_RECEIVER, O_WRONLY);
+        if (writer_fd_ == -1)
+        {
+            throw std::system_error(errno, std::system_category(), "Failed to open write pipe");
+        }
 
         reader_fd_ = open(PIPE_TO_SENDER, O_RDONLY);
+        if (reader_fd_ == -1)
+        {
+            close(writer_fd_);
+            throw std::system_error(errno, std::system_category(), "Failed to open read pipe");
+        }
     }
 
     void setup_as_consumer()
