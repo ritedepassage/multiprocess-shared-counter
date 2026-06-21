@@ -173,15 +173,24 @@ private:
             if (elapsed > CONNECTION_TIMEOUT)
             {
                 auto timeout_seconds = std::chrono::duration_cast<std::chrono::seconds>(CONNECTION_TIMEOUT).count();
-                 throw std::runtime_error(std::string("Timeout waiting for pipes after ") + std::to_string(timeout_seconds) + std::string(" seconds"));
+                throw std::runtime_error(std::string("Timeout waiting for pipes after ") + std::to_string(timeout_seconds) + std::string(" seconds"));
             }
 
             std::this_thread::sleep_for(POLL_INTERVAL);
         }
 
         reader_fd_ = open(PIPE_TO_RECEIVER, O_RDONLY);
+        if (reader_fd_ == -1)
+        {
+            throw std::system_error(errno, std::system_category(), "Failed to open read pipe");
+        }
 
         writer_fd_ = open(PIPE_TO_SENDER, O_WRONLY);
+        if (writer_fd_ == -1)
+        {
+            close(reader_fd_);
+            throw std::system_error(errno, std::system_category(), "Failed to open write pipe");
+        }
     }
 };
 
