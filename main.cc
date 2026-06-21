@@ -4,26 +4,13 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <csignal>
+#include <memory>
 
 #include "blocking-pipe-manager.hh"
 
-volatile bool should_exit = false;
-
-void sginal_handler(int sig)
-{
-    printf("signal %d received\n", sig);
-
-    should_exit = true;
-}
 
 int main(int argc, char **argv)
 {
-    int write_fd;
-    int read_fd;
-
-    ipc_manager<blocking_pipe_manager> *ipc_mgr;
-
-    int counter = 0;
     bool is_intiator = true;
 
     if (argc >= 2)
@@ -40,34 +27,18 @@ int main(int argc, char **argv)
         }
     }
 
-    signal(SIGINT, sginal_handler);
+    std::unique_ptr<ipc_manager<blocking_pipe_manager>> ipc_mgr;
 
     if (is_intiator)
     {
-        blocking_pipe_manager blocking_pipe{true};
-
-        ipc_mgr = &blocking_pipe;
-
-        ipc_mgr->initialize();
-
-        while (!should_exit)
-            should_exit = ipc_mgr->process_messages();
-
-        ipc_mgr->cleanup();
+        ipc_mgr = std::make_unique<blocking_pipe_manager>(true);
     }
     else
     {
-        blocking_pipe_manager blocking_pipe{false};
-
-        ipc_mgr = &blocking_pipe;
-
-        ipc_mgr->initialize();
-
-        while (!should_exit)
-            should_exit = ipc_mgr->process_messages();
-
-        ipc_mgr->cleanup();
+        ipc_mgr = std::make_unique<blocking_pipe_manager>(false);
     }
+
+    ipc_mgr->run();
 
     return 0;
 }
