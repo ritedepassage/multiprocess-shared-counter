@@ -11,10 +11,11 @@ class ipc_manager
 protected:
     int counter_{0};
     std::string_view manager_name_;
+    syslog_logger logger_;
 
 public:
     explicit ipc_manager(std::string_view name) noexcept
-        : manager_name_{name}
+        : manager_name_{name}, logger_{name}
     {
     }
 
@@ -30,11 +31,6 @@ public:
 
     ipc_manager &operator=(ipc_manager &&) = delete;
 
-    void initialize()
-    {
-        static_cast<derived *>(this)->initialize();
-    }
-
     void run()
     {
         initialize();
@@ -44,6 +40,12 @@ public:
                 break;
         }
         cleanup();
+    }
+
+protected:
+    void initialize()
+    {
+        static_cast<derived *>(this)->initialize();
     }
 
     bool process_messages()

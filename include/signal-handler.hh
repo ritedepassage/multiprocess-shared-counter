@@ -6,6 +6,8 @@
 #include <atomic>
 #include <csignal>
 
+#include "syslog-logger.hh"
+
 class signal_handler
 {
 private:
@@ -36,8 +38,17 @@ public:
     }
 
 private:
-    static void handle_signal(int) noexcept
+    static void handle_signal(int sig) noexcept
     {
+        switch (sig)
+        {
+        case SIGINT:
+            syslog(LOG_NOTICE, "Received SIGINT");
+            break;
+        case SIGTERM:
+            syslog(LOG_NOTICE, "Received SIGTERM");
+            break;
+        }
         exit_flag_.store(true, std::memory_order_relaxed);
     }
 };
