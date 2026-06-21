@@ -128,8 +128,15 @@ private:
         unlink(PIPE_TO_RECEIVER);
         unlink(PIPE_TO_SENDER);
 
-        mkfifo(PIPE_TO_RECEIVER, 0666);
-        mkfifo(PIPE_TO_SENDER, 0666);
+        if (mkfifo(PIPE_TO_RECEIVER, 0666) == -1)
+        {
+            throw std::system_error(errno, std::system_category(), "Failed to create receiver pipe");
+        }
+        if (mkfifo(PIPE_TO_SENDER, 0666) == -1)
+        {
+            unlink(PIPE_TO_RECEIVER);
+            throw std::system_error(errno, std::system_category(), "Failed to create intiator pipe");
+        }
 
         writer_fd_ = open(PIPE_TO_RECEIVER, O_WRONLY);
 
