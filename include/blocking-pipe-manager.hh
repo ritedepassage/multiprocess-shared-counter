@@ -8,6 +8,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
+#include <cstring>
 
 #include "ipc-manager.hh"
 
@@ -46,7 +47,6 @@ public:
 
     bool process_messages()
     {
-        std::cout << "blocking process messages" << std::endl;
         if (is_producer_)
         {
             auto bytes_written = write(writer_fd_, (const void *)&counter_, sizeof(counter_));
@@ -60,17 +60,23 @@ public:
             auto bytes_read = read(reader_fd_, (void *)&received, sizeof(received));
             if (bytes_read)
             {
-                counter_ = received;
-                ++counter_;
-                if (counter_ >= 10)
+                std::cout << "producer received " << received << std::endl;
+                counter_ = received + 1;
+
+                if (counter_ >= MAX_COUNTER)
                 {
                     std::cout << "producer process finished with counter " << counter_ << std::endl;
                     return true;
                 }
             }
+            else if (bytes_read == 0)
+            {
+                std::cout << "Consumer closed connection" << std::endl;
+                return true;
+            }
             else
             {
-                std::cout << "peer disconnected current counter " << counter_ << std::endl;
+                std::cout << std::string("Read error: ") + std::strerror(errno);
                 return true;
             }
         }
@@ -80,8 +86,8 @@ public:
             auto bytes_read = read(reader_fd_, (void *)&received, sizeof(received));
             if (bytes_read)
             {
-                counter_ = received;
-                ++counter_;
+                std::cout << "consumer received " << received << std::endl;
+                counter_ = received + 1;
 
                 auto bytes_written = write(writer_fd_, (const void *)&counter_, sizeof(counter_));
                 if (bytes_written <= 0)
@@ -90,20 +96,24 @@ public:
                     return true;
                 }
 
-                if (counter_ >= 10)
+                if (counter_ >= MAX_COUNTER)
                 {
                     std::cout << "consumer process finished with counter " << counter_ << std::endl;
                     return true;
                 }
             }
+            else if (bytes_read == 0)
+            {
+                std::cout << "Producer closed connection" << std::endl;
+                return true;
+            }
             else
             {
-                std::cout << "peer disconnected current counter " << counter_ << std::endl;
+                std::cout << std::string("Read error: ") + std::strerror(errno);
                 return true;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
+        std::this_thread::sleep_for(PROCESS_INTERVAL);
         return false;
     }
 
