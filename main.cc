@@ -9,38 +9,89 @@
 #include "blocking-pipe-manager.hh"
 #include "nonblocking-pipe-manager.hh"
 
+void print_usage(const char *prog_name)
+{
+    std::cout << "Usage: " << prog_name << " -t <init|rec> [-m <blocking|nonblocking>]\n";
+    std::cout << "Options:\n";
+    std::cout << "  -t <type>    Process type: 'init' (producer) or 'rec' (consumer)\n";
+    std::cout << "  -m <mode>    IPC mode: 'blocking' or 'nonblocking' (default: blocking)\n";
+}
+
 int main(int argc, char **argv)
 {
-    bool is_intiator = true;
+    bool is_initiator = true;
+    bool is_nonblocking = true;
+    int opt;
 
-    if (argc >= 2)
+    while ((opt = getopt(argc, argv, "t:m")) != -1)
     {
-        if (strcmp(argv[1], "-t") == 0)
+        switch (opt)
         {
-            if (strcmp(argv[2], "rec") == 0)
+        case 't':
+        {
+            if (optarg)
             {
-                printf("process is receiver\n");
-                is_intiator = false;
+                if (std::strcmp(optarg, "rec") == 0)
+                {
+                    is_initiator = false;
+                }
+                else if (std::strcmp(optarg, "init") == 0)
+                {
+                    is_initiator = true;
+                }
+                else
+                {
+                    std::cerr << "Invalid type: " << optarg << ". Use 'init' or 'rec'\n";
+                    print_usage(argv[0]);
+                    return 1;
+                }
             }
-            else if (strcmp(argv[2], "init") != 0)
-                printf("unknown process type (%s) - considering the process as initiator\n", argv[2]);
+        }
+        break;
+        case 'm':
+        {
+            if (optarg)
+            {
+                if (std::strcmp(optarg, "nonblocking") == 0)
+                {
+                    is_nonblocking = true;
+                }
+                else if (std::strcmp(optarg, "blocking") == 0)
+                {
+                    is_nonblocking = false;
+                }
+                else
+                {
+                    std::cerr << "Invalid mode: " << optarg << ". Use 'blocking' or 'nonblocking'\n";
+                    print_usage(argv[0]);
+                    return 1;
+                }
+            }
+        }
+        break;
+        default:
+        {
+            print_usage(argv[0]);
+            return 1;
+        }
         }
     }
 
     try
     {
-        std::unique_ptr<ipc_manager<nonblocking_pipe_manager>> non_ipc_mgr;
 
-        if (is_intiator)
+        if (is_nonblocking)
         {
-            non_ipc_mgr = std::make_unique<nonblocking_pipe_manager>(true);
+            std::unique_ptr<ipc_manager<nonblocking_pipe_manager>> ipc_mgr;
+            ipc_mgr = std::make_unique<nonblocking_pipe_manager>(is_initiator);
+            ipc_mgr->run();
         }
         else
         {
-            non_ipc_mgr = std::make_unique<nonblocking_pipe_manager>(false);
+            std::unique_ptr<ipc_manager<blocking_pipe_manager>> ipc_mgr;
+            ipc_mgr = std::make_unique<blocking_pipe_manager>(is_initiator);
+            ipc_mgr->run();
         }
-
-        non_ipc_mgr->run();
     }
     catch (const std::exception &e)
     {
