@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "blocking-pipe-manager.hh"
+#include "nonblocking-pipe-manager.hh"
 
 int main(int argc, char **argv)
 {
@@ -28,18 +29,18 @@ int main(int argc, char **argv)
 
     try
     {
-        std::unique_ptr<ipc_manager<blocking_pipe_manager>> ipc_mgr;
+        std::unique_ptr<ipc_manager<nonblocking_pipe_manager>> non_ipc_mgr;
 
         if (is_intiator)
         {
-            ipc_mgr = std::make_unique<blocking_pipe_manager>(true);
+            non_ipc_mgr = std::make_unique<nonblocking_pipe_manager>(true);
         }
         else
         {
-            ipc_mgr = std::make_unique<blocking_pipe_manager>(false);
+            non_ipc_mgr = std::make_unique<nonblocking_pipe_manager>(false);
         }
 
-        ipc_mgr->run();
+        non_ipc_mgr->run();
     }
     catch (const std::exception &e)
     {
