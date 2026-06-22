@@ -14,20 +14,8 @@
 
 class blocking_pipe_manager : public ipc_manager<blocking_pipe_manager>
 {
-private:
-    int writer_fd_{-1};
-    int reader_fd_{-1};
-    bool is_producer_;
-
-    static constexpr const char *PIPE_TO_RECEIVER = "/tmp/counter_to_receiver";
-    static constexpr const char *PIPE_TO_SENDER = "/tmp/counter_to_sender";
-    static constexpr int MAX_COUNTER{10};
-    static constexpr auto POLL_INTERVAL{std::chrono::milliseconds(100)};
-    static constexpr auto PROCESS_INTERVAL{std::chrono::milliseconds(500)};
-    static constexpr auto CONNECTION_TIMEOUT{std::chrono::seconds(30)};
-
 public:
-    explicit blocking_pipe_manager(bool is_producer) : ipc_manager{"blocking_pipe"}, is_producer_{is_producer}
+    explicit blocking_pipe_manager(bool is_producer) : ipc_manager{"blocking_pipe", is_producer}
     {
     }
 

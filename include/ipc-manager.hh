@@ -12,10 +12,21 @@ protected:
     int counter_{0};
     std::string_view manager_name_;
     syslog_logger logger_;
+    bool is_producer_;
+
+    int writer_fd_{-1};
+    int reader_fd_{-1};
+
+    static constexpr const char *PIPE_TO_RECEIVER = "/tmp/counter_to_receiver";
+    static constexpr const char *PIPE_TO_SENDER = "/tmp/counter_to_sender";
+    static constexpr int MAX_COUNTER{10};
+    static constexpr auto POLL_INTERVAL{std::chrono::milliseconds(100)};
+    static constexpr auto PROCESS_INTERVAL{std::chrono::milliseconds(500)};
+    static constexpr auto CONNECTION_TIMEOUT{std::chrono::seconds(30)};
 
 public:
-    explicit ipc_manager(std::string_view name) noexcept
-        : manager_name_{name}, logger_{name}
+    explicit ipc_manager(std::string_view name, bool is_producer) noexcept
+        : manager_name_{name}, logger_{name}, is_producer_{is_producer}
     {
     }
 
