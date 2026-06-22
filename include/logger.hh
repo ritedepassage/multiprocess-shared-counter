@@ -14,7 +14,6 @@ enum class log_level : int
     CRIT = 5
 };
 
-// CRTP base class for loggers - static polymorphism
 template <typename derived>
 class logger
 {

@@ -35,14 +35,18 @@ public:
     {
         if (is_producer_)
         {
-            std::cout << "blocking producer initialize" << std::endl;
+            logger_.info("Initializing as PRODUCER");
             setup_as_producer();
         }
         else
         {
-            std::cout << "blocking consumer initialize" << std::endl;
+            logger_.info("Initializing as CONSUMER");
             setup_as_consumer();
         }
+        logger_.info(std::string("Pipes connected. Writer fd = ") +
+                     std::to_string(writer_fd_) +
+                     std::string("Reader fd = ") +
+                     std::to_string(reader_fd_));
     }
 
     bool process_messages()
@@ -117,9 +121,9 @@ public:
         return false;
     }
 
-    void cleanup()
+    void cleanup() noexcept
     {
-        std::cout << "blocking cleanup" << std::endl;
+        logger_.info("Cleaning up file descriptors");
         if (writer_fd_ >= 0)
         {
             close(writer_fd_);
@@ -134,6 +138,7 @@ public:
         {
             unlink(PIPE_TO_RECEIVER);
             unlink(PIPE_TO_SENDER);
+            logger_.debug("Removed pipe files");
         }
     }
 

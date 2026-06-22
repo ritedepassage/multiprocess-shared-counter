@@ -37,8 +37,7 @@ public:
     {
         if (is_open_)
         {
-            syslog(priority, "%.*s",
-                   static_cast<int>(message.size()), message.data());
+            syslog(priority, "%.*s", static_cast<int>(message.size()), message.data());
         }
     }
 };
@@ -47,7 +46,7 @@ public:
 class syslog_logger : public logger<syslog_logger>
 {
 private:
-    static inline std::unique_ptr<syslog_connection> connection_{nullptr};
+    std::unique_ptr<syslog_connection> connection_{nullptr};
     std::string component_name_;
 
     static int to_syslog_priority(log_level level) noexcept
@@ -71,7 +70,7 @@ private:
     }
 
 public:
-    static void init(std::string_view app_name, int facility = LOG_USER)
+    void init(std::string_view app_name, int facility = LOG_USER)
     {
         if (!connection_)
         {
@@ -80,13 +79,16 @@ public:
         }
     }
 
-    static void shutdown()
+    ~syslog_logger()
     {
         connection_.reset();
     }
 
     explicit syslog_logger(std::string_view component_name)
-        : component_name_(component_name) {}
+        : component_name_(component_name)
+    {
+        init("counter_ipc", LOG_USER);
+    }
 
     void log_impl(log_level level, std::string_view message) const
     {

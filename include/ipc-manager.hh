@@ -33,6 +33,8 @@ public:
 
     void run()
     {
+        logger_.notice("Run loop starting");
+
         initialize();
         while (!signal_handler::should_exit())
         {
@@ -40,12 +42,23 @@ public:
                 break;
         }
         cleanup();
+        logger_.notice(std::string("Run loop finished. Final counter" + std::to_string(counter_)));
     }
 
 protected:
     void initialize()
     {
-        static_cast<derived *>(this)->initialize();
+        try
+        {
+            logger_.info("Starting initialization");
+            static_cast<derived *>(this)->initialize();
+        }
+        catch (const std::exception &e)
+        {
+            logger_.error(std::string("Initialization failed: ") + e.what());
+            throw;
+        }
+        logger_.info("Initialization completed");
     }
 
     bool process_messages()
@@ -55,6 +68,7 @@ protected:
 
     void cleanup()
     {
+        logger_.info("Starting cleanup");
         static_cast<derived *>(this)->cleanup();
     }
 };
