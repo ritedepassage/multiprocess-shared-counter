@@ -14,7 +14,7 @@ enum class log_level : int
     CRIT = 5
 };
 
-template <typename derived>
+template <typename specific_logger>
 class logger
 {
 public:
@@ -55,6 +55,6 @@ public:
 protected:
     void log(log_level level, std::string_view message) const
     {
-        static_cast<const derived *>(this)->log_impl(level, message);
+        static_cast<const specific_logger *>(this)->log_impl(level, message);
     }
 };

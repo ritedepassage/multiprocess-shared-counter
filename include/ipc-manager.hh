@@ -5,7 +5,7 @@
 
 #include "signal-handler.hh"
 
-template <typename derived>
+template <typename pipe_manager>
 class ipc_manager
 {
 protected:
@@ -62,7 +62,7 @@ protected:
         try
         {
             logger_.info("Starting initialization");
-            static_cast<derived *>(this)->initialize();
+            static_cast<pipe_manager *>(this)->initialize();
         }
         catch (const std::exception &e)
         {
@@ -74,13 +74,13 @@ protected:
 
     bool process_messages()
     {
-        return static_cast<derived *>(this)->process_messages();
+        return static_cast<pipe_manager *>(this)->process_messages();
     }
 
     void cleanup()
     {
         logger_.info("Starting cleanup");
-        static_cast<derived *>(this)->cleanup();
+        static_cast<pipe_manager *>(this)->cleanup();
     }
 };
 
