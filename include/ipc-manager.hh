@@ -54,7 +54,7 @@ public:
                 break;
         }
         cleanup();
-        logger_.notice(std::string("Run loop finished. Final counter" + std::to_string(counter_)));
+        logger_.notice(std::string("Run loop finished. Final counter " + std::to_string(counter_)));
     }
 
 protected:
