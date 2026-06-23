@@ -16,8 +16,6 @@ class nonblocking_pipe_manager : public ipc_manager<nonblocking_pipe_manager>
 {
 private:
     int epoll_fd_{-1};
-    bool has_pending_write_{false};
-    int pending_counter_{0};
     bool initialized_{false};
 
     static constexpr auto EPOLL_TIMEOUT{std::chrono::seconds(10)};
