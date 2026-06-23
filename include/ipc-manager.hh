@@ -13,6 +13,7 @@ protected:
     std::string_view manager_name_;
     syslog_logger logger_;
     bool is_producer_;
+    bool is_initialized_{false};
 
     int writer_fd_{-1};
     int reader_fd_{-1};

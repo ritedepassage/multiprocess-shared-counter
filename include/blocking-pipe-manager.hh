@@ -35,10 +35,18 @@ public:
                      std::to_string(writer_fd_) +
                      std::string("Reader fd = ") +
                      std::to_string(reader_fd_));
+
+        is_initialized_ = true;
     }
 
     bool process_messages()
     {
+        if (!is_initialized_)
+        {
+            logger_.error("Process messages called before initialization");
+            return true;
+        }
+
         if (is_producer_)
         {
             auto bytes_written = write(writer_fd_, (const void *)&counter_, sizeof(counter_));
@@ -111,6 +119,11 @@ public:
 
     void cleanup() noexcept
     {
+        if (!is_initialized_)
+        {
+            return; // Nothing to cleanup
+        }
+
         logger_.info("Cleaning up file descriptors");
         if (writer_fd_ >= 0)
         {
@@ -128,6 +141,8 @@ public:
             unlink(PIPE_TO_SENDER);
             logger_.debug("Removed pipe files");
         }
+
+        is_initialized_ = false;
     }
 
 private:

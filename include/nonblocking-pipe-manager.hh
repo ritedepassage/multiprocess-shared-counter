@@ -16,7 +16,6 @@ class nonblocking_pipe_manager : public ipc_manager<nonblocking_pipe_manager>
 {
 private:
     int epoll_fd_{-1};
-    bool initialized_{false};
 
     static constexpr auto EPOLL_TIMEOUT{std::chrono::seconds(10)};
     static constexpr int MAX_EPOLL_EVENTS = 2;
@@ -53,12 +52,12 @@ public:
             setup_as_consumer();
         }
 
-        initialized_ = true;
+        is_initialized_ = true;
     }
 
     bool process_messages()
     {
-        if (!initialized_)
+        if (!is_initialized_)
         {
             logger_.error("Process messages called before initialization");
             return true;
@@ -68,7 +67,7 @@ public:
 
     void cleanup() noexcept
     {
-        if (!initialized_)
+        if (!is_initialized_)
         {
             return; // Nothing to cleanup
         }
@@ -105,7 +104,7 @@ public:
             logger_.debug("Removed pipe files");
         }
 
-        initialized_ = false;
+        is_initialized_ = false;
         logger_.debug("Cleanup complete");
     }
 
