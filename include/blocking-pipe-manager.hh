@@ -52,7 +52,7 @@ public:
             auto bytes_written = write(writer_fd_, (const void *)&counter_, sizeof(counter_));
             if (bytes_written <= 0)
             {
-                std::cout << "failed to write on producer " << counter_ << std::endl;
+                logger_.error("Failed to write on producer");
                 return true;
             }
 
@@ -60,23 +60,23 @@ public:
             auto bytes_read = read(reader_fd_, (void *)&received, sizeof(received));
             if (bytes_read)
             {
-                std::cout << "producer received " << received << std::endl;
+                logger_.debug("Producer received " + std::to_string(received));
                 counter_ = received + 1;
 
                 if (counter_ >= MAX_COUNTER)
                 {
-                    std::cout << "producer process finished with counter " << counter_ << std::endl;
+                    logger_.info("Producer process finished with counter " + std::to_string(counter_));
                     return true;
                 }
             }
             else if (bytes_read == 0)
             {
-                std::cout << "Consumer closed connection" << std::endl;
+                logger_.info("Consumer closed connection");
                 return true;
             }
             else
             {
-                std::cout << std::string("Read error: ") + std::strerror(errno);
+                logger_.error(std::string("Read error: ") + std::strerror(errno));
                 return true;
             }
         }
@@ -86,30 +86,31 @@ public:
             auto bytes_read = read(reader_fd_, (void *)&received, sizeof(received));
             if (bytes_read)
             {
-                std::cout << "consumer received " << received << std::endl;
+                logger_.debug("Consumer received " + std::to_string(received));
+
                 counter_ = received + 1;
 
                 auto bytes_written = write(writer_fd_, (const void *)&counter_, sizeof(counter_));
                 if (bytes_written <= 0)
                 {
-                    std::cout << "failed to write on consumer " << counter_ << std::endl;
+                    logger_.error("Failed to write on consumer");
                     return true;
                 }
 
                 if (counter_ >= MAX_COUNTER)
                 {
-                    std::cout << "consumer process finished with counter " << counter_ << std::endl;
+                    logger_.info("Consumer process finished with counter " + std::to_string(counter_));
                     return true;
                 }
             }
             else if (bytes_read == 0)
             {
-                std::cout << "Producer closed connection" << std::endl;
+                logger_.info("Producer closed connection");
                 return true;
             }
             else
             {
-                std::cout << std::string("Read error: ") + std::strerror(errno);
+                logger_.error(std::string("Read error: ") + std::strerror(errno));
                 return true;
             }
         }
@@ -155,11 +156,14 @@ private:
         {
             throw std::system_error(errno, std::system_category(), "Failed to create receiver pipe");
         }
+        logger_.debug("Created receiver pipe");
         if (mkfifo(PIPE_TO_SENDER, 0666) == -1)
         {
             unlink(PIPE_TO_RECEIVER);
             throw std::system_error(errno, std::system_category(), "Failed to create intiator pipe");
         }
+
+        logger_.info("Waiting for consumer to connect...");
 
         writer_fd_ = open(PIPE_TO_RECEIVER, O_WRONLY);
         if (writer_fd_ == -1)
@@ -179,6 +183,8 @@ private:
     {
         auto start = std::chrono::steady_clock::now();
 
+        logger_.info("Waiting for producer to create pipes...");
+
         while ((access(PIPE_TO_RECEIVER, F_OK) == -1 ||
                 access(PIPE_TO_SENDER, F_OK) == -1))
         {
@@ -197,11 +203,15 @@ private:
             std::this_thread::sleep_for(POLL_INTERVAL);
         }
 
+        logger_.info("Pipes found, connecting...");
+
         reader_fd_ = open(PIPE_TO_RECEIVER, O_RDONLY);
         if (reader_fd_ == -1)
         {
             throw std::system_error(errno, std::system_category(), "Failed to open read pipe");
         }
+
+        logger_.debug("Read pipe opened");
 
         writer_fd_ = open(PIPE_TO_SENDER, O_WRONLY);
         if (writer_fd_ == -1)
@@ -209,6 +219,8 @@ private:
             close(reader_fd_);
             throw std::system_error(errno, std::system_category(), "Failed to open write pipe");
         }
+
+        logger_.debug("Write pipe opened");
     }
 };
 
